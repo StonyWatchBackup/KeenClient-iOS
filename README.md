@@ -79,6 +79,8 @@ Adding events just stores the events locally on the device. You must explicitly 
     }
 ```
 
+An important note: it's a best practice to issue a single upload at a time. We make a best effort to reduce the number of threads spawned to upload in the background, but if you call upload many many times in a tight loop you're going to cause issues for yourself.
+
 ##### Do analysis with Keen IO
 
     TO DO
@@ -86,6 +88,12 @@ Adding events just stores the events locally on the device. You must explicitly 
 That's it! After running your code, check your Keen IO Project to see the event has been added.
 
 ### Changelog
+
+##### 3.2.5
+
++ Don't throw exceptions and crash the app when the local cache directory is unavailable.
++ Remove ISO8601DateFormatter dependency.
++ Use Grand Central Dispatch to not spawn one thread per upload invocation.
 
 ##### 3.2.4
 
