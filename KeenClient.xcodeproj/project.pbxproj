@@ -393,7 +393,8 @@
 		017EE11514E30C95000F3868 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastTestingUpgradeCheck = 0510;
+				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = "Keen Labs";
 			};
 			buildConfigurationList = 017EE11814E30C95000F3868 /* Build configuration list for PBXProject "KeenClient" */;
@@ -663,7 +664,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PUBLIC_HEADERS_FOLDER_PATH = ../../Headers;
+				PUBLIC_HEADERS_FOLDER_PATH = include/KeenClient;
 				SDKROOT = iphoneos;
 			};
 			name = Debug;
@@ -680,7 +681,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PUBLIC_HEADERS_FOLDER_PATH = ../../Headers;
+				PUBLIC_HEADERS_FOLDER_PATH = include/KeenClient;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
