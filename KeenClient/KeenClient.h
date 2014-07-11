@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
+#import "KIOEventStore.h"
 #import "KeenProperties.h"
 
 // defines a type for the block we'll use with our global properties
@@ -150,6 +151,14 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  */
 + (Boolean)isLoggingEnabled;
 
+
+/**
+ Call this to indiscriminately delete all events queued for sending.
+ */
++ (void)clearAllEvents;
+
++ (KIOEventStore *)getEventStore;
+
 /**
  Call this if your code needs to use more than one Keen project.  By convention, if you
  call this, you're responsible for releasing the returned instance once you're finished with it.
@@ -218,6 +227,7 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  will be logged.
  
  @param block The block to be executed once uploading is finished, regardless of whether or not the upload succeeded.
+ The block is also called when no upload was necessary because no events were captured.
  */
 - (void)uploadWithFinishedBlock:(void (^)())block;
 
@@ -226,6 +236,11 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  If you want to update geo to the current location, call this method.
  */
 - (void)refreshCurrentLocation;
+
+/**
+ * Import fs-based data into the SQLite database.
+ */
+- (void)importFileData;
 
 // defines the KCLog macro
 #define KEEN_LOGGING_ENABLED [[KeenClient sharedClient] loggingEnabled]
