@@ -53,7 +53,7 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
     client.globalPropertiesDictionary = @{@"some_standard_key": @"some_standard_value"};
  
  */
-@property (nonatomic, retain) NSDictionary *globalPropertiesDictionary;
+@property (nonatomic, strong) NSDictionary *globalPropertiesDictionary;
 
 /**
  This Objective-C property represents the Keen Global Properties block for this instance of the KeenClient. 
@@ -95,7 +95,7 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  [KeenClient refreshCurrentLocation] to pull location from the device or you can set this property with
  your own value.
  */
-@property (nonatomic, retain) CLLocation *currentLocation;
+@property (nonatomic, strong) CLLocation *currentLocation;
 
 /**
  Call this to retrieve the managed instance of KeenClient and set its project ID and Write/Read Keys
@@ -148,6 +148,8 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
 
 /**
  Returns whether or not logging is currently enabled.
+ 
+ @return true if logging is enabled, false if disabled.
  */
 + (Boolean)isLoggingEnabled;
 
@@ -157,6 +159,12 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  */
 + (void)clearAllEvents;
 
+
+/**
+ Call this to retrieve an instance of KIOEventStore.
+ 
+ @return An instance of KIOEventStore.
+ */
 + (KIOEventStore *)getEventStore;
 
 /**
@@ -200,8 +208,10 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  @param event An NSDictionary that consists of key/value pairs.  Keen naming conventions apply.  Nested NSDictionaries or NSArrays are acceptable.
  @param eventCollection The name of the collection you want to put this event into.
  @param anError If the event was added, anError will be nil, otherwise it will contain information about why it wasn't added.
+
+ @return YES if the event was added, or NO in case some error happened.
  */
-- (void)addEvent:(NSDictionary *)event toEventCollection:(NSString *)eventCollection error:(NSError **)anError;
+- (BOOL)addEvent:(NSDictionary *)event toEventCollection:(NSString *)eventCollection error:(NSError **)anError;
 
 /**
  Call this any time you want to add an event that will eventually be sent to the keen.io server AND you
@@ -214,8 +224,10 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
  @param keenProperties An instance of KeenProperties that consists of properties to override defaulted values.
  @param eventCollection The name of the event collection you want to put this event into.
  @param anError If the event was added, anError will be nil, otherwise it will contain information about why it wasn't added.
+
+ @return YES if the event was added, or NO in case some error happened.
  */
-- (void)addEvent:(NSDictionary *)event withKeenProperties:(KeenProperties *)keenProperties toEventCollection:(NSString *)eventCollection error:(NSError **)anError;
+- (BOOL)addEvent:(NSDictionary *)event withKeenProperties:(KeenProperties *)keenProperties toEventCollection:(NSString *)eventCollection error:(NSError **)anError;
 
 /**
  Call this whenever you want to upload all the events captured so far.  This will spawn a low
@@ -238,12 +250,19 @@ typedef NSDictionary* (^KeenGlobalPropertiesBlock)(NSString *eventCollection);
 - (void)refreshCurrentLocation;
 
 /**
+ Returns the Keen SDK Version
+ 
+ @return The current SDK version string.
+ */
++ (NSString *)sdkVersion;
+
+/**
  * Import fs-based data into the SQLite database.
  */
 - (void)importFileData;
 
 // defines the KCLog macro
-#define KEEN_LOGGING_ENABLED [[KeenClient sharedClient] loggingEnabled]
+#define KEEN_LOGGING_ENABLED [KeenClient loggingEnabled]
 #define KCLog(message, ...)if([KeenClient isLoggingEnabled]) NSLog(message, ##__VA_ARGS__)
 
 @end

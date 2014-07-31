@@ -13,7 +13,6 @@
 
 
 static KeenClient *sharedClient;
-static NSDateFormatter *dateFormatter;
 static BOOL geoLocationEnabled = NO;
 static BOOL loggingEnabled = NO;
 static KIOEventStore *eventStore;
@@ -21,16 +20,16 @@ static KIOEventStore *eventStore;
 @interface KeenClient ()
 
 // The project ID for this particular client.
-@property (nonatomic, retain) NSString *projectId;
+@property (nonatomic, strong) NSString *projectId;
 
 // The Write Key for this particular client.
-@property (nonatomic, retain) NSString *writeKey;
+@property (nonatomic, strong) NSString *writeKey;
 
 // The Read Key for this particular client.
-@property (nonatomic, retain) NSString *readKey;
+@property (nonatomic, strong) NSString *readKey;
 
 // NSLocationManager
-@property (nonatomic, retain) CLLocationManager *locationManager;
+@property (nonatomic, strong) CLLocationManager *locationManager;
 
 // How many times the previous timestamp has been used.
 @property (nonatomic) NSInteger numTimesTimestampUsed;
@@ -138,8 +137,10 @@ static KIOEventStore *eventStore;
 
 /**
  Fills the error object with the given message appropriately.
+ 
+ @return Always return NO.
  */
-- (void) handleError:(NSError **)error withErrorMessage:(NSString *)errorMessage;
+- (BOOL)handleError:(NSError **)error withErrorMessage:(NSString *)errorMessage;
     
 @end
 
@@ -173,12 +174,6 @@ static KIOEventStore *eventStore;
 
     [KeenClient disableLogging];
     [KeenClient enableGeoLocation];
-    if (!dateFormatter) {
-        dateFormatter = [[NSDateFormatter alloc] init];
-        NSTimeZone *timeZone = [NSTimeZone localTimeZone];
-        [dateFormatter setTimeZone:timeZone];
-        [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
-    }
 }
 
 + (void)disableLogging {
@@ -245,6 +240,10 @@ static KIOEventStore *eventStore;
         return nil;
     }
     
+    if (!eventStore) {
+        eventStore = [[KIOEventStore alloc] init];
+    }
+    
     self = [self init];
     if (self) {
         self.projectId = projectId;
@@ -264,20 +263,6 @@ static KIOEventStore *eventStore;
     }
 
     return self;
-}
-
-- (void)dealloc {
-    // nil out the properties which we've retained (which will release them)
-    self.projectId = nil;
-    self.writeKey = nil;
-    self.readKey = nil;
-    self.locationManager = nil;
-    self.currentLocation = nil;
-    self.globalPropertiesDictionary = nil;
-    // explicitly release the properties which we've copied
-    [self.globalPropertiesBlock release];
-    dispatch_release(self.uploadQueue);
-    [super dealloc];
 }
 
 # pragma mark - Get a shared client
@@ -335,7 +320,7 @@ static KIOEventStore *eventStore;
         // set up the location manager
         if (self.locationManager == nil) {
             if ([CLLocationManager locationServicesEnabled]) {
-                self.locationManager = [[[CLLocationManager alloc] init] autorelease];
+                self.locationManager = [[CLLocationManager alloc] init];
                 self.locationManager.delegate = self;
             }
         }
@@ -377,13 +362,11 @@ static KIOEventStore *eventStore;
     
     if ([eventCollection rangeOfString:@"$"].location == 0) {
         errorMessage = @"An event collection name cannot start with the dollar sign ($) character.";
-        [self handleError:anError withErrorMessage:errorMessage];
-        return NO;
+        return [self handleError:anError withErrorMessage:errorMessage];
     }
     if ([eventCollection length] > 64) {
         errorMessage = @"An event collection name cannot be longer than 64 characters.";
-        [self handleError:anError withErrorMessage:errorMessage];
-        return NO;
+        return [self handleError:anError withErrorMessage:errorMessage];
     }
     return YES;
 }
@@ -394,14 +377,12 @@ static KIOEventStore *eventStore;
     if (depth == 0) {
         if (!event || [event count] == 0) {
             errorMessage = @"You must specify a non-null, non-empty event.";
-            [self handleError:anError withErrorMessage:errorMessage];
-            return NO;
+            return [self handleError:anError withErrorMessage:errorMessage];
         }
         id keenObject = [event objectForKey:@"keen"];
         if (keenObject != nil && ![keenObject isKindOfClass:[NSDictionary class]]) {
             errorMessage = @"An event's root-level property named 'keen' must be a dictionary.";
-            [self handleError:anError withErrorMessage:errorMessage];
-            return NO;
+            return [self handleError:anError withErrorMessage:errorMessage];
         }
     }
     
@@ -409,18 +390,15 @@ static KIOEventStore *eventStore;
         // validate keys
         if ([key rangeOfString:@"."].location != NSNotFound) {
             errorMessage = @"An event cannot contain a property with the period (.) character in it.";
-            [self handleError:anError withErrorMessage:errorMessage];
-            return NO;
+            return [self handleError:anError withErrorMessage:errorMessage];
         }
         if ([key rangeOfString:@"$"].location == 0) {
             errorMessage = @"An event cannot contain a property that starts with the dollar sign ($) character in it.";
-            [self handleError:anError withErrorMessage:errorMessage];
-            return NO;
+            return [self handleError:anError withErrorMessage:errorMessage];
         }
         if ([key length] > 256) {
             errorMessage = @"An event cannot contain a property longer than 256 characters.";
-            [self handleError:anError withErrorMessage:errorMessage];
-            return NO;
+            return [self handleError:anError withErrorMessage:errorMessage];
         }
         
         // now validate values
@@ -429,8 +407,7 @@ static KIOEventStore *eventStore;
             // strings can't be longer than 10k
             if ([value length] > 10000) {
                 errorMessage = @"An event cannot contain a property value longer than 10,000 characters.";
-                [self handleError:anError withErrorMessage:errorMessage];
-                return NO;
+                return [self handleError:anError withErrorMessage:errorMessage];
             }
         } else if ([value isKindOfClass:[NSDictionary class]]) {
             if (![self validateEvent:value withDepth:depth+1 error:anError]) {
@@ -441,11 +418,11 @@ static KIOEventStore *eventStore;
     return YES;
 }
 
-- (void)addEvent:(NSDictionary *)event toEventCollection:(NSString *)eventCollection error:(NSError **) anError {
-    [self addEvent:event withKeenProperties:nil toEventCollection:eventCollection error:anError];
+- (BOOL)addEvent:(NSDictionary *)event toEventCollection:(NSString *)eventCollection error:(NSError **) anError {
+    return [self addEvent:event withKeenProperties:nil toEventCollection:eventCollection error:anError];
 }
 
-- (void)addEvent:(NSDictionary *)event withKeenProperties:(KeenProperties *)keenProperties toEventCollection:(NSString *)eventCollection error:(NSError **) anError {
+- (BOOL)addEvent:(NSDictionary *)event withKeenProperties:(KeenProperties *)keenProperties toEventCollection:(NSString *)eventCollection error:(NSError **) anError {
     // make sure the write key has been set - can't do anything without that
     if (![KeenClient validateKey:self.writeKey]) {
         [NSException raise:@"KeenNoWriteKeyProvided" format:@"You tried to add an event without setting a write key, please set one!"];
@@ -453,10 +430,10 @@ static KIOEventStore *eventStore;
 
     // don't do anything if the event itself or the event collection name are invalid somehow.
     if (![self validateEventCollection:eventCollection error:anError]) {
-        return;
+        return NO;
     }
     if (![self validateEvent:event withDepth:0 error:anError]) {
-        return;
+        return NO;
     }
     
     KCLog(@"Adding event to collection: %@", eventCollection);
@@ -487,7 +464,7 @@ static KIOEventStore *eventStore;
     }
 
     if (!keenProperties) {
-        KeenProperties *newProperties = [[[KeenProperties alloc] init] autorelease];
+        KeenProperties *newProperties = [[KeenProperties alloc] init];
         keenProperties = newProperties;
     }
     if (geoLocationEnabled && self.currentLocation != nil && keenProperties.location == nil) {
@@ -513,9 +490,9 @@ static KIOEventStore *eventStore;
     NSError *error = nil;
     NSData *jsonData = [self serializeEventToJSON:eventToWrite error:&error];
     if (error) {
-        [self handleError:anError
-         withErrorMessage:[NSString stringWithFormat:@"An error occurred when serializing event to JSON: %@", [error localizedDescription]]];
-        return;
+        return [self handleError:anError
+                withErrorMessage:[NSString stringWithFormat:@"An error occurred when serializing event to JSON: %@", [error localizedDescription]]
+                underlayingError:error];
     }
     
     // write JSON to store
@@ -525,6 +502,8 @@ static KIOEventStore *eventStore;
     if ([KeenClient isLoggingEnabled]) {
         KCLog(@"Event: %@", eventToWrite);
     }
+
+    return YES;
 }
 
 - (NSData *)serializeEventToJSON:(NSMutableDictionary *)event error:(NSError **) anError {
@@ -538,11 +517,11 @@ static KIOEventStore *eventStore;
 }
 
 - (NSMutableDictionary *)makeDictionaryMutable:(NSDictionary *)dict {
-    return [[dict mutableCopy] autorelease];
+    return [dict mutableCopy];
 }
 
 - (NSMutableArray *)makeArrayMutable:(NSArray *)array {
-    return [[array mutableCopy] autorelease];
+    return [array mutableCopy];
 }
 
 - (id)handleInvalidJSONInObject:(id)value {
@@ -781,7 +760,7 @@ static KIOEventStore *eventStore;
         if (![defaults boolForKey:@"didFSImport"]) {
             // Slurp in any filesystem based events. This converts older fs-based
             // event storage into newer SQL-lite based storage.
-            [sharedClient importFileData];
+            [self importFileData];
         }
 
         NSData *data = nil;
@@ -845,7 +824,6 @@ static KIOEventStore *eventStore;
         if (error) {
             NSString *responseString = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
             KCLog(@"An error occurred when deserializing HTTP response JSON into dictionary.\nError: %@\nResponse: %@", [error localizedDescription], responseString);
-            [responseString release];
             return;
         }
         // now iterate through the keys of the response, which represent collection names
@@ -889,7 +867,6 @@ static KIOEventStore *eventStore;
         KCLog(@"Response code was NOT 200. It was: %ld", (long)responseCode);
         NSString *responseString = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
         KCLog(@"Response body was: %@", responseString);
-        [responseString release];
     }            
 }
 
@@ -912,18 +889,27 @@ static KIOEventStore *eventStore;
     return responseData;
 }
 
-- (void) handleError:(NSError **)error withErrorMessage:(NSString *)errorMessage {
+- (BOOL)handleError:(NSError **)error withErrorMessage:(NSString *)errorMessage {
+    return [self handleError:error withErrorMessage:errorMessage underlayingError:nil];
+}
+
+- (BOOL)handleError:(NSError **)error withErrorMessage:(NSString *)errorMessage underlayingError:(NSError *)underlayingError {
     if (error != NULL) {
-        NSDictionary *userInfo = [NSDictionary dictionaryWithObject:errorMessage forKey:NSLocalizedDescriptionKey];
+        const id<NSCopying> keys[] = {NSLocalizedDescriptionKey, NSUnderlyingErrorKey};
+        const id objects[] = {errorMessage, underlayingError};
+        NSUInteger count = underlayingError ? 2 : 1;
+        NSDictionary *userInfo = [NSDictionary dictionaryWithObjects:objects forKeys:keys count:count];
         *error = [NSError errorWithDomain:kKeenErrorDomain code:1 userInfo:userInfo];
         KCLog(@"%@", *error);
     }
+
+    return NO;
 }
-                    
+
 # pragma mark - NSDate => NSString
-                    
+
 - (id)convertDate:(id)date {
-    NSString *string = [dateFormatter stringFromDate:date];
+    NSString *string = [eventStore convertNSDateToISO8601:date];
     return string;
 }
 
@@ -944,6 +930,12 @@ static KIOEventStore *eventStore;
         return dict;
     }
     return NULL;
+}
+
+# pragma mark - SDK
+
++ (NSString *)sdkVersion {
+    return kKeenSdkVersion;
 }
 
 # pragma mark - To make testing easier

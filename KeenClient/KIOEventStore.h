@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "sqlite3.h"
 
 @interface KIOEventStore : NSObject
 
@@ -27,6 +26,9 @@
 
  /**
   Add an event to the store.
+  
+  @param eventData Your event data.
+  @param coll Your event collection.
   */
 - (BOOL)addEvent: (NSData *)eventData collection: (NSString *)coll;
 
@@ -53,6 +55,8 @@
 
  /**
   Delete an event from the store
+  
+  @param eventId The id of the event to delete.
   */
 - (void)deleteEvent: (NSNumber *)eventId;
 
@@ -61,9 +65,17 @@
  */
 - (void)deleteAllEvents;
 
+/**
+ Convert an NSDate to ISO-8601 using SQLite (thread safe)
+ 
+ @param date A date.
+ */
+- (id)convertNSDateToISO8601:(NSDate *)date;
 
 /**
  Delete events starting at an offset. Helps to keep the "queue" bounded.
+ 
+ @param offset The offset to start deleting events from.
  */
 - (void)deleteEventsFromOffset: (NSNumber *)offset;
 @end
