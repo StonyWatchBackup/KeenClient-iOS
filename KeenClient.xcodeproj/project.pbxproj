@@ -524,8 +524,8 @@
 		017EE11514E30C95000F3868 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastTestingUpgradeCheck = 0510;
-				LastUpgradeCheck = 0610;
+				LastTestingUpgradeCheck = 0620;
+				LastUpgradeCheck = 0620;
 				ORGANIZATIONNAME = "Keen Labs";
 				TargetAttributes = {
 					017EE12D14E30C96000F3868 = {
