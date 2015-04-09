@@ -525,7 +525,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastTestingUpgradeCheck = 0620;
-				LastUpgradeCheck = 0620;
+				LastUpgradeCheck = 0630;
 				ORGANIZATIONNAME = "Keen Labs";
 				TargetAttributes = {
 					017EE12D14E30C96000F3868 = {
