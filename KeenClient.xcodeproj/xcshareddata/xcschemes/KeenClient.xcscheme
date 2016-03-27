@@ -33,7 +33,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "017EE12D14E30C96000F3868"
-               BuildableName = "KeenClientTests.octest"
+               BuildableName = "KeenClientTests.xctest"
                BlueprintName = "KeenClientTests"
                ReferencedContainer = "container:KeenClient.xcodeproj">
             </BuildableReference>
